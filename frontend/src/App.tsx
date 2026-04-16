@@ -1,29 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+interface KioskState {
+	prediction: string;
+	name: string | null;
+	status: number | null;
+}
 
 export default function App() {
 	const videoRef = useRef<HTMLVideoElement | null>(null);
-	const [prediction, setPrediction] = useState("Waiting...");
+	const [kioskState, setKioskState] = useState<KioskState>({
+		prediction: "Loading...",
+		name: null,
+		status: null,
+	});
 
-	useEffect(() => {
-		// 1. Request access to the user's webcam
-		navigator.mediaDevices
-			.getUserMedia({ video: true })
-			.then((stream) => {
-				if (videoRef.current) {
-					videoRef.current.srcObject = stream;
-				}
-			})
-			.catch((err) => console.error("Camera error:", err));
-
-		// 2. Set up a loop to capture and send a frame every 500ms (2 FPS)
-		const interval = setInterval(() => {
-			sendFrameToBackend();
-		}, 500);
-
-		return () => clearInterval(interval); // Cleanup when component unmounts
-	}, []);
-
-	const sendFrameToBackend = async () => {
+	const sendFrameToBackend = useCallback(async () => {
 		const video = videoRef.current;
 		if (!video) return;
 
@@ -47,11 +38,36 @@ export default function App() {
 			});
 
 			const data = await response.json();
-			setPrediction(data.status); // Update UI with inference
+
+			console.log("Backend response:", data); // Debugging log
+			setKioskState({
+				prediction: data.prediction,
+				name: data.name,
+				status: data.status,
+			});
 		} catch (error) {
 			console.error("Backend unreachable", error);
 		}
-	};
+	}, []);
+
+	useEffect(() => {
+		// 1. Request access to the user's webcam
+		navigator.mediaDevices
+			.getUserMedia({ video: true })
+			.then((stream) => {
+				if (videoRef.current) {
+					videoRef.current.srcObject = stream;
+				}
+			})
+			.catch((err) => console.error("Camera error:", err));
+
+		// 2. Set up a loop to capture and send a frame every 500ms (2 FPS)
+		const interval = setInterval(() => {
+			sendFrameToBackend();
+		}, 500);
+
+		return () => clearInterval(interval); // Cleanup when component unmounts
+	}, [sendFrameToBackend]);
 
 	return (
 		<div style={{ textAlign: "center", marginTop: "50px" }}>
@@ -64,7 +80,9 @@ export default function App() {
 				playsInline
 				style={{ width: "640px", borderRadius: "10px" }}
 			/>
-			<h2>Status: {prediction}</h2>
+			<h2>Status: {kioskState.prediction}</h2>
+			<h3>Predicted Person: {kioskState.name || "None"}</h3>
+			<h3>Confidence: {kioskState.status}</h3>
 		</div>
 	);
 }
