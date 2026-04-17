@@ -34,7 +34,7 @@ kiosk_state = {
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODELS_DIR = BASE_DIR / "models"
-MODEL_PATH = MODELS_DIR / "kiosk_face_model_2.keras"
+MODEL_PATH = MODELS_DIR / "kiosk_face_model_eff.keras"
 DATASET_TRAIN_DIR = BASE_DIR / "dataset" / "train"
 
 FACE_DETECTOR_MODEL_CANDIDATES = (
