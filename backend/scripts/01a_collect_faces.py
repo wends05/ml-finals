@@ -2,22 +2,25 @@ import cv2
 import mediapipe as mp
 import os
 import time
+import random  # Added for randomizing the train/val split
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # ==========================================
 # CONFIGURATION
 # ==========================================
-IMAGE_SIZE = (224, 224)  # Required size for MobileNetV2
-TOTAL_IMAGES = 100       # How many images to capture per person
+IMAGE_SIZE = (224, 224)  # Required size for EfficientNet/MobileNet
+TOTAL_IMAGES = 300       # Increased from 100 to 300 for better data variety
 TRAIN_RATIO = 0.8        # 80% for training, 20% for validation
-DELAY_MS = 100           # Delay between captures to get varied angles
+DELAY_MS = 50           # Delay between captures to get varied angles
 MIN_DETECTION_CONFIDENCE = 0.7
+
+# Supported model filenames
 MODEL_CANDIDATE_FILES = (
-    "detector.tflite",              # Used in MediaPipe sample notebook
-    "blaze_face_short_range.tflite",# Common downloaded model filename
-    "face_detector.task",           # Task bundle format (also supported)
-    "blaze_face_full_range.tflite" # Another common model variant
+    "detector.tflite",
+    "blaze_face_short_range.tflite",
+    "face_detector.task",
+    "blaze_face_full_range.tflite"
 )
 
 def get_base_dir():
@@ -35,9 +38,7 @@ def get_face_detector_model_path():
     raise FileNotFoundError(
         "No MediaPipe face detector model found.\n"
         f"Expected one of:\n{expected_paths}\n\n"
-        "Download a model and place it in backend/models, e.g.:\n"
-        "https://storage.googleapis.com/mediapipe-models/face_detector/"
-        "blaze_face_short_range/float16/1/blaze_face_short_range.tflite"
+        "Download a model and place it in backend/models."
     )
 
 def create_face_detector():
@@ -82,8 +83,14 @@ def main():
     
     train_dir, val_dir = setup_directories(class_name)
     
-    # Calculate how many images go to train vs val
+    # Calculate exact number of train vs val images
     num_train = int(TOTAL_IMAGES * TRAIN_RATIO)
+    num_val = TOTAL_IMAGES - num_train
+    
+    # --- NEW: Randomization Logic ---
+    # Create a list like ['train', 'train', ..., 'val', 'val'] and shuffle it
+    destinations = ['train'] * num_train + ['val'] * num_val
+    random.shuffle(destinations)
     
     # Start Video Capture
     cap = cv2.VideoCapture(0)
@@ -92,8 +99,9 @@ def main():
         return
 
     print(f"\nStarting capture for '{class_name}'...")
-    print(f"Goal: {TOTAL_IMAGES} total images ({num_train} Train, {TOTAL_IMAGES - num_train} Val)")
+    print(f"Goal: {TOTAL_IMAGES} total images ({num_train} Train, {num_val} Val)")
     print(f"Using model: {os.path.basename(model_path)}")
+    print("Remember to move your head slightly, talk, and change expressions!")
     print("Press 'q' to quit early.\n")
     
     time.sleep(2) # Give user 2 seconds to get ready
@@ -131,13 +139,15 @@ def main():
                 # Crop the face from the original frame
                 face_crop = frame[y_pad:y_pad+h_pad, x_pad:x_pad+w_pad]
 
-                # Ensure the crop is valid (sometimes bounding boxes go out of frame bounds)
+                # Ensure the crop is valid
                 if face_crop.size != 0:
                     # Normalize size to 224x224
                     face_resized = cv2.resize(face_crop, IMAGE_SIZE)
 
-                    # Determine if this image goes to 'train' or 'val'
-                    if count < num_train:
+                    # --- NEW: Assign destination based on shuffled list ---
+                    current_destination = destinations[count]
+                    
+                    if current_destination == 'train':
                         save_path = os.path.join(train_dir, f"{class_name}_{count}.jpg")
                         folder_name = "TRAIN"
                     else:
@@ -148,10 +158,11 @@ def main():
                     cv2.imwrite(save_path, face_resized)
                     count += 1
 
-                    # Draw a rectangle on the live view so the user sees it's working
-                    cv2.rectangle(frame, (x_pad, y_pad), (x_pad+w_pad, y_pad+h_pad), (0, 255, 0), 2)
+                    # Draw a rectangle on the live view
+                    box_color = (0, 255, 0) if folder_name == "TRAIN" else (255, 165, 0) # Green for train, Orange for val
+                    cv2.rectangle(frame, (x_pad, y_pad), (x_pad+w_pad, y_pad+h_pad), box_color, 2)
                     cv2.putText(frame, f"Captured: {count}/{TOTAL_IMAGES} ({folder_name})",
-                                (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                                (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, box_color, 2)
 
                     # Wait a tiny bit between captures so images aren't identical
                     cv2.waitKey(DELAY_MS)
@@ -164,7 +175,7 @@ def main():
                 print("\nCapture interrupted by user.")
                 break
 
-    print(f"\n✅ Capture complete! Saved {count} images for '{class_name}'.")
+    print(f"\n✅ Capture complete! Saved {count} randomly split images for '{class_name}'.")
     cap.release()
     cv2.destroyAllWindows()
 

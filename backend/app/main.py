@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import mediapipe as mp
-import os
 from pathlib import Path
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
