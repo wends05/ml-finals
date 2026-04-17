@@ -4,6 +4,7 @@ import numpy as np
 import base64
 import binascii
 import logging
+import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,13 +14,46 @@ from pathlib import Path
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
+
+def get_env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        logger.warning("Invalid int for %s=%r. Using default=%s", name, value, default)
+        return default
+
+
+def get_env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        logger.warning("Invalid float for %s=%r. Using default=%s", name, value, default)
+        return default
+
+
+def get_env_list(name: str, default: list[str]) -> list[str]:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    values = [item.strip() for item in value.split(",") if item.strip()]
+    return values or default
+
 app = FastAPI()
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+ALLOWED_ORIGINS = get_env_list("CORS_ALLOW_ORIGINS", ["*"])
 
 # Allow Vite to send POST requests with JSON headers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -33,7 +67,7 @@ kiosk_state = {
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODELS_DIR = BASE_DIR / "models"
-MODEL_PATH = MODELS_DIR / "kiosk_face_model_eff.keras"
+MODEL_PATH = Path(os.getenv("MODEL_PATH", str(MODELS_DIR / "kiosk_face_model_eff.keras")))
 DATASET_TRAIN_DIR = BASE_DIR / "dataset" / "train"
 
 FACE_DETECTOR_MODEL_CANDIDATES = (
@@ -43,10 +77,17 @@ FACE_DETECTOR_MODEL_CANDIDATES = (
     "blaze_face_full_range.tflite",
 )
 
-IMAGE_SIZE = (224, 224)
-PADDING = 30
-MIN_DETECTION_CONFIDENCE = 0.7
-PREDICTION_THRESHOLD = 0.50
+IMAGE_WIDTH = get_env_int("IMAGE_WIDTH", 224)
+IMAGE_HEIGHT = get_env_int("IMAGE_HEIGHT", 224)
+IMAGE_SIZE = (IMAGE_WIDTH, IMAGE_HEIGHT)
+PADDING = get_env_int("FACE_PADDING", 30)
+MIN_DETECTION_CONFIDENCE = get_env_float("MIN_DETECTION_CONFIDENCE", 0.7)
+PREDICTION_THRESHOLD = get_env_float("PREDICTION_THRESHOLD", 0.50)
+
+model = None
+CLASS_NAMES: list[str] = []
+face_detector = None
+MODEL_INIT_ERROR: str | None = None
 
 
 def load_class_names() -> list[str]:
@@ -93,12 +134,29 @@ def create_face_detector() -> vision.FaceDetector:
     return vision.FaceDetector.create_from_options(options)
 
 
-if not MODEL_PATH.is_file():
-    raise FileNotFoundError(f"Keras model not found: {MODEL_PATH}")
+def initialize_runtime() -> None:
+    global model, CLASS_NAMES, face_detector, MODEL_INIT_ERROR
 
-model = tf.keras.models.load_model(str(MODEL_PATH))
-CLASS_NAMES = load_class_names()
-face_detector = create_face_detector()
+    if model is not None and face_detector is not None and CLASS_NAMES:
+        return
+
+    try:
+        if not MODEL_PATH.is_file():
+            raise FileNotFoundError(f"Keras model not found: {MODEL_PATH}")
+
+        model = tf.keras.models.load_model(str(MODEL_PATH))
+        CLASS_NAMES = load_class_names()
+        face_detector = create_face_detector()
+        MODEL_INIT_ERROR = None
+        logger.info("Model runtime initialized successfully")
+    except Exception as exc:  # pragma: no cover - initialization guard for runtime
+        MODEL_INIT_ERROR = str(exc)
+        logger.exception("Failed to initialize model runtime: %s", exc)
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    initialize_runtime()
 
 # Define the expected data structure from Vite
 class ImageData(BaseModel):
@@ -128,6 +186,14 @@ def decode_base64_image(data_url: str) -> np.ndarray:
 async def process_frame(data: ImageData):
     """Vite calls this 2-3 times a second with a base64 image."""
     global kiosk_state
+
+    initialize_runtime()
+
+    if MODEL_INIT_ERROR:
+        return {
+            "error": "Model runtime is not ready",
+            "details": MODEL_INIT_ERROR,
+        }
     
     try:
         frame = decode_base64_image(data.image)
@@ -204,6 +270,17 @@ async def process_frame(data: ImageData):
 def get_kiosk_status():
     """ESP32 will instantly get the latest state from here."""
     return kiosk_state
+
+
+@app.get("/api/health")
+def health_check():
+    return {
+        "ok": MODEL_INIT_ERROR is None,
+        "model_loaded": model is not None,
+        "classes_loaded": len(CLASS_NAMES),
+        "detector_loaded": face_detector is not None,
+        "error": MODEL_INIT_ERROR,
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

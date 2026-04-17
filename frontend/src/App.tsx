@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const backendBaseUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:8000").replace(/\/$/, "");
+
 interface KioskState {
 	prediction: string;
 	name: string | null;
@@ -31,7 +33,7 @@ export default function App() {
 
 		try {
 			// Send the frame to FastAPI
-			const response = await fetch("http://localhost:8000/api/predict", {
+			const response = await fetch(`${backendBaseUrl}/api/predict`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ image: base64Image }),

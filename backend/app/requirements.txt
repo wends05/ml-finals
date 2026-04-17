@@ -6,8 +6,9 @@ fastapi==0.135.3
 h11==0.16.0
 idna==3.11
 numpy==2.4.4
-opencv-python==4.13.0.92
+opencv-python-headless==4.13.0.92
 mediapipe==0.10.21
+tensorflow==2.20.0
 pydantic==2.13.1
 pydantic-core==2.46.1
 starlette==1.0.0
