@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const backendBaseUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:8000").replace(/\/$/, "");
+const backendBaseUrl = (
+	import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"
+).replace(/\/$/, "");
 
 interface KioskState {
 	prediction: string;
@@ -80,7 +82,7 @@ export default function App() {
 				ref={videoRef}
 				autoPlay
 				playsInline
-				style={{ width: "640px", borderRadius: "10px" }}
+				style={{ width: "640px", height: "640px", borderRadius: "10px" }}
 			/>
 			<h2>Status: {kioskState.prediction}</h2>
 			<h3>Predicted Person: {kioskState.name || "None"}</h3>
