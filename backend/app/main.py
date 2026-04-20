@@ -269,11 +269,15 @@ async def process_frame(data: ImageData):
 @app.get("/api/kiosk-status")
 def get_kiosk_status():
     """ESP32 will instantly get the latest state from here."""
+    # on address http://127.0.0.1:3009/api/kiosk-status
+    # on esp32: http://<your-computer-ip>:3009/api/kiosk-status
+    # test by displaying kiosk_state["status"]
     return kiosk_state
 
 
 @app.get("/api/health")
 def health_check():
+    # on esp32: http://<your-computer-ip>:3009/api/health
     return {
         "ok": MODEL_INIT_ERROR is None,
         "model_loaded": model is not None,
@@ -283,4 +287,5 @@ def health_check():
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+  
+    uvicorn.run(app, host="0.0.0.0", port=3009)
