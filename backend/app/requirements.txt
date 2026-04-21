@@ -7,7 +7,7 @@ h11==0.16.0
 idna==3.11
 numpy==2.4.4
 opencv-python-headless==4.13.0.92
-mediapipe==0.10.21
+mediapipe
 tensorflow==2.20.0
 pydantic==2.13.1
 pydantic-core==2.46.1

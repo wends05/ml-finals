@@ -1,92 +1,104 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const backendBaseUrl = (
-	import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"
-).replace(/\/$/, "");
+  import.meta.env.VITE_BACKEND_URL || 'http://localhost:3009'
+).replace(/\/$/, '')
+
+const POST_INTERVAL_MS = 2000
 
 interface KioskState {
-	prediction: string;
-	name: string | null;
-	status: number | null;
+  prediction: string
+  name: string | null
+  status: number | null
 }
 
 export default function App() {
-	const videoRef = useRef<HTMLVideoElement | null>(null);
-	const [kioskState, setKioskState] = useState<KioskState>({
-		prediction: "Loading...",
-		name: null,
-		status: null,
-	});
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const isSendingRef = useRef(false)
+  const lastSendAtRef = useRef(0)
+  const [kioskState, setKioskState] = useState<KioskState>({
+    prediction: 'Loading...',
+    name: null,
+    status: null,
+  })
 
-	const sendFrameToBackend = useCallback(async () => {
-		const video = videoRef.current;
-		if (!video) return;
+  const sendFrameToBackend = useCallback(async () => {
+    const video = videoRef.current
+    if (!video || isSendingRef.current) return
 
-		// Create a hidden canvas to take a "snapshot" of the video
-		const canvas = document.createElement("canvas");
-		canvas.width = video.videoWidth;
-		canvas.height = video.videoHeight;
-		const ctx: CanvasRenderingContext2D | null = canvas.getContext("2d");
-		if (!ctx) return;
-		ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const now = Date.now()
+    if (now - lastSendAtRef.current < POST_INTERVAL_MS) return
 
-		// Compress the image to a base64 JPEG (Quality: 0.7 out of 1.0)
-		const base64Image = canvas.toDataURL("image/jpeg", 0.7);
+    isSendingRef.current = true
+    lastSendAtRef.current = now
 
-		try {
-			// Send the frame to FastAPI
-			const response = await fetch(`${backendBaseUrl}/api/predict`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ image: base64Image }),
-			});
+    try {
+      // Create a hidden canvas to take a "snapshot" of the video
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-			const data = await response.json();
+      // Compress the image to a base64 JPEG (Quality: 0.7 out of 1.0)
+      const base64Image = canvas.toDataURL('image/jpeg', 0.7)
 
-			console.log("Backend response:", data); // Debugging log
-			setKioskState({
-				prediction: data.prediction,
-				name: data.name,
-				status: data.status,
-			});
-		} catch (error) {
-			console.error("Backend unreachable", error);
-		}
-	}, []);
+      // Send the frame to FastAPI
+      const response = await fetch(`${backendBaseUrl}/api/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image }),
+      })
 
-	useEffect(() => {
-		// 1. Request access to the user's webcam
-		navigator.mediaDevices
-			.getUserMedia({ video: true })
-			.then((stream) => {
-				if (videoRef.current) {
-					videoRef.current.srcObject = stream;
-				}
-			})
-			.catch((err) => console.error("Camera error:", err));
+      const data = await response.json()
 
-		// 2. Set up a loop to capture and send a frame every 500ms (2 FPS)
-		const interval = setInterval(() => {
-			sendFrameToBackend();
-		}, 500);
+      console.log('Backend response:', data) // Debugging log
+      setKioskState({
+        prediction: data.prediction,
+        name: data.name,
+        status: data.status,
+      })
+    } catch (error) {
+      console.error('Backend unreachable', error)
+    } finally {
+      isSendingRef.current = false
+    }
+  }, [])
 
-		return () => clearInterval(interval); // Cleanup when component unmounts
-	}, [sendFrameToBackend]);
+  useEffect(() => {
+    // 1. Request access to the user's webcam
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+        }
+      })
+      .catch((err) => console.error('Camera error:', err))
 
-	return (
-		<div style={{ textAlign: "center", marginTop: "50px" }}>
-			<h1>Welcome Kiosk</h1>
-			{/* The user sees smooth live video here */}
-			{/** biome-ignore lint/a11y/useMediaCaption: ho */}
-			<video
-				ref={videoRef}
-				autoPlay
-				playsInline
-				style={{ width: "640px", height: "640px", borderRadius: "10px" }}
-			/>
-			<h2>Status: {kioskState.prediction}</h2>
-			<h3>Predicted Person: {kioskState.name || "None"}</h3>
-			<h3>Confidence: {kioskState.status}</h3>
-		</div>
-	);
+    // 2. Set up a loop to capture and send a frame at a gentler rate.
+    const interval = setInterval(() => {
+      sendFrameToBackend()
+    }, POST_INTERVAL_MS)
+
+    return () => clearInterval(interval) // Cleanup when component unmounts
+  }, [sendFrameToBackend])
+
+  return (
+    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+      <h1>Welcome Kiosk</h1>
+      {/* The user sees smooth live video here */}
+      {/** biome-ignore lint/a11y/useMediaCaption: ho */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        style={{ width: '640px', borderRadius: '10px' }}
+      />
+      <h2>Status: {kioskState.prediction}</h2>
+      <h3>Predicted Person: {kioskState.name || 'None'}</h3>
+      <h3>Confidence: {kioskState.status}</h3>
+    </div>
+  )
 }
