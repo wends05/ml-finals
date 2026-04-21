@@ -269,7 +269,8 @@ async def process_frame(data: ImageData):
 @app.get("/api/kiosk-status")
 def get_kiosk_status():
     """ESP32 will instantly get the latest state from here."""
-    # on address http://127.0.0.1:3009/api/kiosk-status
+    # on address http://127.0.0.1:3009/api/kiosk-status or 
+    # use the ip http://192.xxx.xxx.xx ipv4 so that it runs on ur local pc ip in the network
     # on esp32: http://<your-computer-ip>:3009/api/kiosk-status
     # test by displaying kiosk_state["status"]
     return kiosk_state

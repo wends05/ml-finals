@@ -40,10 +40,11 @@ static const unsigned int ENDPOINT_RETRY_TIMES = 5;
 static const unsigned long POST_RESULT_DELAY_MS = 1000;       // Delay after greeting/error.
 static const unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;   // Max time to wait for WiFi on boot.
 static const unsigned long WIFI_SUCCESS_GREEN_MS = 1200;      // Green LED duration after WiFi connects.
+static const unsigned long FLASH_INTERVAL_MS = 1500;          // Slow alternation between welcome and move-close prompts.
 
 static const unsigned long ULTRASONIC_TRIGGER_INTERVAL_MS = 120; // Debounce for trigger.
 static const double DETECT_START_RANGE_CM = 10.0;
-static const double RETRY_DISTANCE_CM = 2.0;                  // Very close to confirm retry.
+static const double RETRY_DISTANCE_CM = 6.0;                  // Close enough to confirm retry on common HC-SR04 noise.
 static const double MAX_DISTANCE_CM = 400.0;
 static const unsigned long STEADY_TIME_US = 100;              // Person must stay in range.
 
@@ -71,10 +72,16 @@ bool retryPromptShown = false;
 enum RetryReason {
   RETRY_NONE = 0,
   RETRY_API_UNREACHABLE = 1,
-  RETRY_WAITING = 2
+  RETRY_WAITING = 2,
+  RETRY_RECOGNIZED = 3,
+  RETRY_NO_FACE = 4
 };
 
 RetryReason retryReason = RETRY_NONE;
+String recognizedName = "";
+String recognizedConfidence = "";
+bool flashVisible = true;
+unsigned long lastFlashToggleMs = 0;
 
 LiquidCrystal_I2C lcd(LCD_I2C_ADDRESS, LCD_COLS, LCD_ROWS);
 
@@ -228,12 +235,20 @@ void resetPresenceState() {
   inRangeStartUs = 0;
   retryReason = RETRY_NONE;
   retryPromptShown = false;
+  recognizedName = "";
+  recognizedConfidence = "";
+  flashVisible = true;
+  lastFlashToggleMs = 0;
 }
 
 void enterRetryState(RetryReason reason) {
   waitingForRetry = true;
   retryReason = reason;
   retryPromptShown = false;
+}
+
+void logDistanceIfNeeded(unsigned long nowMs) {
+  (void) nowMs;
 }
 
 void setup() {
@@ -276,6 +291,7 @@ void loop() {
   if (newDistanceAvailable) {
     newDistanceAvailable = false;
     lastDistanceCm = computeDistanceCm();
+    logDistanceIfNeeded(nowMs);
   }
 
   if (wifiConnected && wifiGreenUntilMs > 0 && nowMs < wifiGreenUntilMs) {
@@ -287,6 +303,7 @@ void loop() {
 
   if (waitingForWifiRetry) {
     blinkRed(1, 120);
+    logDistanceIfNeeded(nowMs);
     if (lastDistanceCm <= RETRY_DISTANCE_CM) {
       Serial.println("WiFi retry requested.");
       lcdShow("Retry WiFi", "Connecting...");
@@ -311,13 +328,26 @@ void loop() {
 
   if (waitingForRetry) {
     setLedRed();
+    logDistanceIfNeeded(nowMs);
+    if (retryReason == RETRY_RECOGNIZED && millis() - lastFlashToggleMs >= FLASH_INTERVAL_MS) {
+      lastFlashToggleMs = millis();
+      flashVisible = !flashVisible;
+      if (flashVisible) {
+        lcdShow("Welcome back", recognizedName);
+      } else {
+        lcdShow("Move close", "to try again");
+      }
+    }
     if (!retryPromptShown) {
       if (retryReason == RETRY_API_UNREACHABLE) {
         Serial.println("API unreachable. Move close to retry.");
-        lcdShow("API unreachable", "Move close");
-      } else {
+        lcdShow("API unreachable", "Move < 6cm");
+      } else if (retryReason == RETRY_WAITING) {
         Serial.println("Try again. Move close to retry.");
-        lcdShow("Try again", "Move close");
+        lcdShow("Try again", "Move < 6cm");
+      } else if (retryReason == RETRY_RECOGNIZED) {
+        Serial.println("Recognized. Hold close to try again.");
+        lcdShow("Welcome back", recognizedName);
       }
       retryPromptShown = true;
     }
@@ -370,8 +400,24 @@ void loop() {
     }
 
     String statusValue = jsonValue(payload, "status");
+    String nameValue = jsonValue(payload, "name");
+    String confidenceValue = jsonValue(payload, "confidence");
     if (statusValue.length() == 0) {
       statusValue = payload;
+    }
+
+    bool unrecognizedFace = (nameValue == "Unknown");
+    String nameValueLower = nameValue;
+    nameValueLower.toLowerCase();
+    bool noFaceDetected = nameValueLower.indexOf("no face") >= 0;
+
+    if (noFaceDetected) {
+      Serial.println("No face detected, try again.");
+      lcdShow("No face detected", "Try again");
+      blinkRed(3, 150);
+      enterRetryState(RETRY_NO_FACE);
+      lastResultMs = nowMs;
+      return;
     }
 
     unsigned int tries = 0;
@@ -437,15 +483,19 @@ void loop() {
         }
       }
 
-      Serial.println("Please try again by placing your hand 1-2cm from the sensor.");
-      lcdShow("Try again", "Move close");
-      enterRetryState(RETRY_WAITING);
+      if (unrecognizedFace) {
+        Serial.println("Not recognized. Please register your face first!");
+        lcdShow("Not recognized", "Register face");
+        enterRetryState(RETRY_WAITING);
+      } else {
+        Serial.println("Please try again by placing your hand 1-2cm from the sensor.");
+        lcdShow("Try again", "Move close");
+        enterRetryState(RETRY_WAITING);
+      }
       lastResultMs = nowMs;
       return;
     }
 
-    String nameValue = jsonValue(payload, "name");
-    String confidenceValue = jsonValue(payload, "confidence");
     if (nameValue.length() == 0) {
       nameValue = "Unknown";
     }
@@ -459,12 +509,15 @@ void loop() {
     Serial.print(confidenceValue);
     Serial.println(" that I recognize you!");
 
-    lcdShow("Welcome back", nameValue);
+    recognizedName = nameValue;
+    recognizedConfidence = confidenceValue;
+    lcdShow("Welcome back", recognizedName);
+    flashVisible = true;
+    lastFlashToggleMs = millis();
 
     delay(POST_RESULT_DELAY_MS);
-    Serial.println("If you'd like to try again, place your hand 1-2cm from the sensor.");
-    lcdShow("Try again", "Move close");
-    enterRetryState(RETRY_WAITING);
+    Serial.println("Hold close to try again.");
+    enterRetryState(RETRY_RECOGNIZED);
     lastResultMs = nowMs;
   }
 
