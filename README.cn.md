@@ -124,7 +124,7 @@ ESP32 GPIO 逻辑电平为 3.3V，HC-SR04 Echo 引脚可能输出 5V。
 2. 配置：
 	- `WIFI_SSID`
 	- `WIFI_PASS`
-	- `API_BASE_URL`（填写你电脑的局域网 IP 和后端端口，例如 `http://192.168.100.94:3009`）
+	- `API_BASE_URL`（填写你电脑的局域网 IP 和后端端口，例如 `http://<YOUR_COMPUTER_LAN_IP>:3009`）
 3. 上传到 ESP32。
 4. 串口监视器波特率设置为 `115200`。
 

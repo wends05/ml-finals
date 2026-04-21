@@ -124,7 +124,7 @@ Utilisez un pont diviseur entre `Echo HC-SR04` et la broche Echo de l’ESP32 po
 2. Définissez :
 	- `WIFI_SSID`
 	- `WIFI_PASS`
-	- `API_BASE_URL` (IP LAN de votre ordinateur et port backend, par exemple `http://192.168.100.94:3009`)
+	- `API_BASE_URL` (IP LAN de votre ordinateur et port backend, par exemple `http://<VOTRE_IP_LAN_PC>:3009`)
 3. Téléversez sur l’ESP32.
 4. Ouvrez le moniteur série à `115200` bauds.
 
