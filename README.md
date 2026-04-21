@@ -122,9 +122,9 @@ Use a voltage divider between `HC-SR04 Echo` and the ESP32 Echo input pin to red
 
 1. Open `backend/esp32/kiosk_status_serial.ino` in Arduino IDE.
 2. Set:
-	- `WIFI_SSID`
-	- `WIFI_PASS`
-	- `API_BASE_URL` (use your computer LAN IP and backend port, for example `http://192.168.100.94:3009`)
+   - `WIFI_SSID`
+   - `WIFI_PASS`
+   - `API_BASE_URL` (use your computer LAN IP and backend port, for example `http://<YOUR_COMPUTER_LAN_IP>:3009`)
 3. Upload to the ESP32.
 4. Open Serial Monitor at `115200` baud.
 
