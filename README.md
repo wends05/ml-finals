@@ -78,6 +78,60 @@ bun run dev
 
 7. The frontend should now be running at `http://localhost:5173`. You can test the face recognition by sending a POST request to the backend by showing your face to the camera through the frontend interface. If the face is recognized, the name of the person will be displayed on the frontend kiosk, and will also be seen on the ESP32's serial monitor.
 
+## ESP32 Setup (Backend Integration)
+
+This project includes ESP32 firmware in `backend/esp32/` that polls backend endpoints such as `/api/kiosk-status` and `/api/health`.
+
+### 1. Install Arduino IDE
+
+- Download and install Arduino IDE from the official website: https://www.arduino.cc/en/software
+
+### 2. Configure Arduino IDE for ESP32
+
+1. Open Arduino IDE.
+2. Go to `File > Preferences`.
+3. In `Additional boards manager URLs`, add:
+
+```text
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+```
+
+4. Go to `Tools > Board > Boards Manager`.
+5. Search for `esp32` and install `esp32 by Espressif Systems`.
+6. Connect your board via USB-C.
+7. Go to `Tools > Board` and select `ESP32 Dev Module`.
+8. Go to `Tools > Port` and select the COM port for your board.
+
+If upload fails, make sure your USB cable supports data (not power-only), and verify the selected board/port.
+
+### 3. Hardware Materials
+
+- 2x LEDs
+- 1x ESP32 WROOM 30 pin ism2.4c 302 USB-C
+- 1x 16x2 I2C LCD with backpack (5V)
+- 1x ultrasonic sensor HC-SR04 (5V)
+- 1x USB-C to USB-A adapter (depends on your ESP32)
+
+### 4. Important Electrical Note (Voltage Divider)
+
+The ESP32 GPIO logic is 3.3V. The HC-SR04 Echo pin can output 5V.
+
+Use a voltage divider between `HC-SR04 Echo` and the ESP32 Echo input pin to reduce the signal to approximately 3.3V. Do not connect the Echo pin directly to the ESP32 GPIO.
+
+### 5. Firmware and Endpoint Configuration
+
+1. Open `backend/esp32/kiosk_status_serial.ino` in Arduino IDE.
+2. Set:
+	- `WIFI_SSID`
+	- `WIFI_PASS`
+	- `API_BASE_URL` (use your computer LAN IP and backend port, for example `http://192.168.100.94:3009`)
+3. Upload to the ESP32.
+4. Open Serial Monitor at `115200` baud.
+
+### 6. Board Pinout Reference
+
+![ESP32 Pinout Reference](frontend/public/boardpinout.png)
+
 ## Specifications
 
 - The model should be trained on a dataset of faces, with at least 5 different classes (people).

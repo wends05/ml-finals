@@ -78,6 +78,60 @@ bun run dev
 
 7. Le frontend devrait maintenant être accessible à l’adresse `http://localhost:5173`. Vous pouvez tester la reconnaissance faciale en envoyant une requête POST au backend tout en montrant votre visage à la caméra via l’interface frontend. Si le visage est reconnu, le nom de la personne sera affiché sur l’interface d’accueil, et apparaîtra également dans le moniteur série de l’ESP32.
 
+## Configuration ESP32 (Intégration Backend)
+
+Ce projet inclut un firmware ESP32 dans `backend/esp32/` qui interroge des endpoints backend comme `/api/kiosk-status` et `/api/health`.
+
+### 1. Installer Arduino IDE
+
+- Téléchargez et installez Arduino IDE depuis le site officiel : https://www.arduino.cc/en/software
+
+### 2. Configurer Arduino IDE pour ESP32
+
+1. Ouvrez Arduino IDE.
+2. Allez dans `File > Preferences`.
+3. Dans `Additional boards manager URLs`, ajoutez :
+
+```text
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+```
+
+4. Allez dans `Tools > Board > Boards Manager`.
+5. Recherchez `esp32` et installez `esp32 by Espressif Systems`.
+6. Connectez votre carte via USB-C.
+7. Dans `Tools > Board`, sélectionnez `ESP32 Dev Module`.
+8. Dans `Tools > Port`, sélectionnez le port COM de la carte.
+
+Si l’upload échoue, vérifiez que le câble USB transporte les données (pas uniquement l’alimentation) et que la carte/port sélectionnés sont corrects.
+
+### 3. Matériel nécessaire
+
+- 2x LEDs
+- 1x ESP32 WROOM 30 pin ism2.4c 302 USB-C
+- 1x écran LCD I2C 16x2 avec backpack (5V)
+- 1x capteur ultrason HC-SR04 (5V)
+- 1x adaptateur USB-C vers USB-A (selon votre ESP32)
+
+### 4. Note électrique importante (Pont diviseur)
+
+La logique GPIO de l’ESP32 est en 3,3V. La broche Echo du HC-SR04 peut sortir du 5V.
+
+Utilisez un pont diviseur entre `Echo HC-SR04` et la broche Echo de l’ESP32 pour ramener le signal vers 3,3V. Ne connectez pas directement Echo au GPIO de l’ESP32.
+
+### 5. Configuration du firmware et des endpoints
+
+1. Ouvrez `backend/esp32/kiosk_status_serial.ino` dans Arduino IDE.
+2. Définissez :
+	- `WIFI_SSID`
+	- `WIFI_PASS`
+	- `API_BASE_URL` (IP LAN de votre ordinateur et port backend, par exemple `http://192.168.100.94:3009`)
+3. Téléversez sur l’ESP32.
+4. Ouvrez le moniteur série à `115200` bauds.
+
+### 6. Référence du pinout de la carte
+
+![Référence Pinout ESP32](frontend/public/boardpinout.png)
+
 ## Spécifications
 
 - Le modèle doit être entraîné sur un jeu de données de visages, avec au moins 5 classes différentes (personnes).
