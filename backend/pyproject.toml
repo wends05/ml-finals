@@ -4,12 +4,4 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-	"fastapi==0.135.3",
-	"mediapipe==0.10.21",
-	"numpy==2.4.4",
-	"opencv-python-headless==4.13.0.92",
-	"pydantic==2.13.1",
-	"tensorflow==2.20.0",
-	"uvicorn==0.44.0",
-]
+dependencies = []

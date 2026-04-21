@@ -56,13 +56,7 @@ def setup_directories(class_name):
     """Creates the train and val folders for the specific user."""
     base_dir = get_base_dir()
     train_dir = os.path.join(base_dir, 'dataset', 'train', class_name)
-    val_base_dir = os.path.join(base_dir, 'dataset', 'val')
-    legacy_val_base_dir = os.path.join(base_dir, 'dataset', 'value')
-
-    # Backward compatibility: support older folder name "value" if present.
-    if not os.path.isdir(val_base_dir) and os.path.isdir(legacy_val_base_dir):
-        print("⚠️ Using legacy validation directory: dataset/value")
-        val_base_dir = legacy_val_base_dir
+    val_base_dir = os.path.join(base_dir, 'dataset', 'value')
 
     val_dir = os.path.join(val_base_dir, class_name)
     
