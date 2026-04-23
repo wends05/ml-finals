@@ -1,6 +1,6 @@
 # Final Project - Home Greeting System with Face Recognition
 
-[English](README.md) | [中文](README.cn.md) | [Français](README.fr.md)
+[English](README.md)
 
 ## Description
 
