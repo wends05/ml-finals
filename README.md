@@ -245,10 +245,10 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 **WARNING: Ensure all ESP32 I/O connections are 3.3V. Incorrect voltage will permanently damage the board.**
 
-11. Boot process should look like this:
+11. Boot process should look like this:(Please wait for gif or check vid demos folder if nothing is being displayed below)
 
 <a href="frontend/public/demo_vid/bootup_gif.gif">
-    <img width="500" alt="ESP32 boot process" src="frontend/public/demo_vid/bootup_gif.gif" />
+    <img width="300" alt="ESP32 boot process" src="frontend/public/demo_vid/bootup_gif.gif" />
 </a>
 
 12. Make sure the ESP32 and your computer are on the same WiFi network and the ESP32 shows a connected IP.
