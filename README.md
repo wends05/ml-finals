@@ -289,10 +289,10 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 **WARNING: Ensure all ESP32 I/O connections are 3.3V. Incorrect voltage will permanently damage the board.**
 
-11. Boot process should look like this:
+11. Boot process should look like this:(Please wait for gif or check vid demos folder if nothing is being displayed below)
 
 <a href="frontend/public/demo_vid/bootup_gif.gif">
-    <img width="500" alt="ESP32 boot process" src="frontend/public/demo_vid/bootup_gif.gif" />
+    <img width="300" alt="ESP32 boot process" src="frontend/public/demo_vid/bootup_gif.gif" />
 </a>
 
 12. Make sure the ESP32 and your computer are on the same WiFi network and the ESP32 shows a connected IP.
@@ -304,19 +304,19 @@ cd frontend
 npm run dev
 ```
 
-14. ESP32 connection with a detected hand:
+14. ESP32 connection with a detected hand: (Please wait for gif or check vid demos folder if nothing is being displayed below)
 
 <a href="frontend/public/demo_vid/connected_hold.gif">
-    <img width="500" alt="ESP32 connected and ready" src="frontend/public/demo_vid/connected_hold.gif" />
+    <img width="300" alt="ESP32 connected and ready" src="frontend/public/demo_vid/connected_hold.gif" />
 </a>
 
-15. If the frontend is not ready or the camera stream fails, the ESP32 will prompt a retry:
+15. If the frontend is not ready or the camera stream fails, the ESP32 will prompt a retry: (Please wait for gif or check vid demos folder if nothing is being displayed below)
 
 <a href="frontend/public/demo_vid/retrying.gif">
-    <img width="500" alt="ESP32 retry prompt" src="frontend/public/demo_vid/retrying.gif" />
+    <img width="00" alt="ESP32 retry prompt" src="frontend/public/demo_vid/retrying.gif" />
 </a>
 
-16. Expected behavior:
+16. Expected behavior: (Please wait for gif or check vid demos folder if nothing is being displayed below)
 
 - Recognized face: display welcome message.
 - Unrecognized face: prompt to register.
@@ -324,13 +324,13 @@ npm run dev
 - Backend down: print health status from `/api/health`.
 
 <a href="frontend/public/demo_vid/frontend.gif">
-    <img width="500" alt="Frontend recognition flow" src="frontend/public/demo_vid/frontend.gif" />
+    <img width="300" alt="Frontend recognition flow" src="frontend/public/demo_vid/frontend.gif" />
 </a>
 
-17. Try again by placing your hand near the ultrasonic sensor:
+17. Try again by placing your hand near the ultrasonic sensor: (Please wait for gif or check vid demos folder if nothing is being displayed below)
 
 <a href="frontend/public/demo_vid/recognized.gif">
-    <img width="500" alt="Recognized greeting" src="frontend/public/demo_vid/recognized.gif" />
+    <img width="300" alt="Recognized greeting" src="frontend/public/demo_vid/recognized.gif" />
 </a>
 
 </details>
