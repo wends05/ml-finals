@@ -318,7 +318,7 @@ npm run dev
 15. If the frontend is not ready or the camera stream fails, the ESP32 will prompt a retry: (Please wait for gif or check vid demos folder if nothing is being displayed below)
 
 <a href="frontend/public/demo_vid/retrying.gif">
-    <img width="00" alt="ESP32 retry prompt" src="frontend/public/demo_vid/retrying.gif" />
+    <img width="300" alt="ESP32 retry prompt" src="frontend/public/demo_vid/retrying.gif" />
 </a>
 
 16. Expected behavior: (Please wait for gif or check vid demos folder if nothing is being displayed below)
