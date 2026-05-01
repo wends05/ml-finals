@@ -1,100 +1,143 @@
 # Welcome Kiosk - Deep Learning Backend
 
-This repository contains the Artificial Intelligence and backend server logic for the Welcome Kiosk project. It handles data collection, model training via Transfer Learning, and serves a FastAPI backend to process live images.
+This backend contains the training workflow, model files, and FastAPI service for the Welcome Kiosk project.
 
-## 🛠 Prerequisites & Setup
+## Prerequisites and Setup
 
-We use `uv` for lightning-fast Python package management.
-
-1. Initialize the environment and install dependencies:
+We use `uv` for Python environment management.
 
 ```bash
-uv init
-uv add fastapi uvicorn opencv-python mediapipe tensorflow numpy pydantic
+uv sync
 ```
 
-## Data Collection
+If you prefer `pip`, install the dependencies from `requirements.txt`.
 
-To collect face data for training, follow these steps:
+## Private Data Collection
 
-1. Gather a diverse set of images of the target individuals. Ensure good lighting and various angles.
-2. Organize the images in a directory structure like this:
+This project works with private facial data. Keep these rules in mind:
 
-```data/
-├── person1/
-│   ├── img1.jpg
-│   ├── img2.jpg
-│   └── ...
-├── person2/
-│   ├── img1.jpg
-│   ├── img2.jpg
-│   └── ...
-└── ...
-```
+- Do not commit raw image datasets.
+- Do not commit generated face samples, misclassification examples, or any artifact that shows a person's face.
+- Do not publish filenames or identity labels from private training data unless they have already been anonymized.
 
-3. Run the face collection script to extract and save facial landmarks:
+The dataset folder is intentionally ignored by git.
 
-```bash
-uv run python scripts/01_collect_faces.py
-```
+## Training Notebooks
+
+The training notebooks live in `backend/scripts/training/`.
+
+- `02_train_dense.ipynb`
+- `02_train_model_1.ipynb`
+- `02_train_model_2.ipynb`
+
+The most complete privacy-aware analysis notebook is:
+
+- `backend/scripts/training/02_train_model_2.ipynb`
+
+That notebook now includes:
+
+- installation and configuration notes
+- data loading and dataset-audit sections
+- transfer-learning architecture explanation
+- training strategy and callback guidance
+- training-curve analysis
+- validation metrics and confidence analysis
+- optimization recommendations
+- export steps for local-only artifacts
+
+## Interpretation and Notebook Outputs
+
+Use the following committed notes as your safe, editable interpretation layer:
+
+- `backend/scripts/training/model_2_analysis_report.md`
+
+The report summarizes how the model performed well without naming enrolled identities and without embedding any face images.
+
+Important privacy rule:
+- Do not commit notebook-generated artifacts from `backend/scripts/training/artifacts/`.
+
+Those files are ignored on purpose because they may contain:
+
+- private filenames
+- identity labels
+- face-bearing sample images
+- mistake examples from validation data
+
+Instead, whoever runs the notebook should generate those artifacts locally by opening `backend/scripts/training/02_train_model_2.ipynb` and running the cells on their own machine.
+
+Safe outputs to discuss in documentation or presentations:
+
+- training and validation accuracy curves
+- training and validation loss curves
+- redacted confusion matrices
+- precision, recall, and F1 summaries
+- aggregate confidence charts
+- dataset-balance summaries without identity names
+
+Local-only outputs that should stay private:
+
+- sample face grids
+- example prediction images
+- raw validation prediction exports with identifying filenames
 
 ## Model Training
 
-We use Transfer Learning to train our model on the collected face data.
+Run the notebook locally in Jupyter or VS Code.
 
-1. Run the training script:
+If you want analysis only, keep the notebook setting:
 
-```bash
-uv run python scripts/02_train_model.py
+```python
+TRAIN_MODEL = False
 ```
 
-2. The trained model will be saved in the `models/` directory.
+If you want to retrain the model:
 
-## Deploy Backend to Vercel
+```python
+TRAIN_MODEL = True
+```
 
-This backend is configured for Vercel Python runtime via:
+The trained model is saved to:
 
-- `backend/main.py` (ASGI entrypoint)
-- `backend/vercel.json` (routing/build config)
-- `backend/requirements.txt` (deployment dependencies)
+- `backend/models/kiosk_face_model_eff.keras`
 
-### Notes
+## Backend API
 
-- The API exposes:
-  - `GET /api/health`
-  - `POST /api/predict`
-  - `GET /api/kiosk-status`
-- The model runtime now initializes lazily. If model files are missing, the server still starts and `/api/health` reports the error.
-- You can override the default model path with environment variable `MODEL_PATH`.
+The backend exposes:
 
-### Environment variables
+- `GET /api/health`
+- `POST /api/predict`
+- `GET /api/kiosk-status`
 
-This repository includes `backend/.env.example` and it is safe to commit.
+You can override the model file with the `MODEL_PATH` environment variable.
 
-- `.env` is ignored by git.
-- `.env.example` is tracked by git as a template.
+## Run the Backend
 
-Create your local environment file:
+From the `backend` folder:
 
 ```bash
-cp .env.example .env
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+## Environment Variables
+
+Create a local `.env` from `.env.example`.
 
 Available variables:
 
 - `MODEL_PATH`
-- `CORS_ALLOW_ORIGINS` (comma-separated)
+- `CORS_ALLOW_ORIGINS`
 - `FACE_PADDING`
 - `IMAGE_WIDTH`
 - `IMAGE_HEIGHT`
 - `MIN_DETECTION_CONFIDENCE`
 - `PREDICTION_THRESHOLD`
 
-For Vercel, add the same keys in Project Settings → Environment Variables.
+## Deployment Notes
 
-### Deploy steps
+This backend is configured for Vercel with:
 
-1. Import this repository in Vercel.
-2. Set project root to `backend` if deploying backend as a standalone service.
-3. Deploy.
-4. Verify with `GET /api/health`.
+- `backend/main.py`
+- `backend/vercel.json`
+- `backend/requirements.txt`
+
+If model files are missing, the server can still start and expose the health endpoint with an error state.

@@ -210,3 +210,6 @@ __marimo__/
 
 # Dataset related
 dataset*
+
+# Training analysis artifacts may contain private evaluation outputs.
+scripts/training/artifacts/

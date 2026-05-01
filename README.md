@@ -17,6 +17,7 @@ A face recognition kiosk: train a model, serve it with FastAPI, and let an ESP32
 - [Description](#description)
 - [Tech Stack](#tech-stack)
 - [How to Run](#how-to-run)
+- [Interpretation and Notebook Outputs](#interpretation-and-notebook-outputs)
 - [ESP32 Setup (Backend Integration)](#esp32-setup-backend-integration)
 - [Specifications](#specifications)
 - [Actual Demonstration: Connect ESP32 to Backend](#actual-demonstration-connect-esp32-to-backend)
@@ -110,6 +111,49 @@ bun run dev
 ```
 
 7. The frontend should now be running at `http://localhost:5173`. You can test face recognition by showing your face to the camera in the frontend. If recognized, the name is displayed on the kiosk and printed in the ESP32 serial monitor.
+
+</details>
+
+<a id="interpretation-and-notebook-outputs"></a>
+
+<details open>
+<summary><strong>Interpretation and Notebook Outputs</strong></summary>
+
+Use the privacy-safe analysis notebook:
+
+- [backend/scripts/training/02_train_model_2.ipynb](backend/scripts/training/02_train_model_2.ipynb)
+
+Use the committed interpretation notes:
+
+- [backend/scripts/training/model_2_analysis_report.md](backend/scripts/training/model_2_analysis_report.md)
+- [backend/scripts/training/model_2_interpretation_template.md](backend/scripts/training/model_2_interpretation_template.md)
+
+Privacy guidance:
+
+- Do not commit generated notebook artifacts that may contain face images, private filenames, or identity labels.
+- The generated outputs under `backend/scripts/training/artifacts/` are ignored by git on purpose.
+- If you need charts for analysis, run the notebook locally and generate your own private outputs.
+
+Safe outputs to discuss publicly:
+
+- training and validation accuracy curves
+- training and validation loss curves
+- redacted confusion matrices
+- confidence summaries
+- aggregate metric tables
+
+Outputs that should remain local only:
+
+- sample face grids
+- example prediction images
+- raw prediction exports tied to private identities
+
+Model strengths highlighted by the notebook:
+
+- strong validation performance on a balanced private dataset
+- stable transfer-learning behavior with EfficientNetV2B0
+- falling validation loss with no obvious sign of severe overfitting
+- high confidence on most correct predictions
 
 </details>
 
