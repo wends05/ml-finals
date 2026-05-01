@@ -138,3 +138,36 @@ Use a voltage divider between `HC-SR04 Echo` and the ESP32 Echo input pin to red
 - The model should achieve at least 80% accuracy on the validation set.
 - The backend should be able to receive a POST request with an image, and return the predicted class (name of the person) in the image.
 - The frontend should be able to display the name of the recognized person when a face is detected through the camera.
+
+### 6. Actual Demonstration on how to connect ESP32 to Backend
+1. Board Setup (requires 3x 1 kilohm resistor and 2x 220 ohm resistor and jumper wires) 
+ <img height="800" alt="image" src="https://github.com/user-attachments/assets/0a521514-84ff-4367-aca1-d85a0b7d45a8" />
+
+2.  Make sure to gather dataset if not already by running the file 
+```bash
+python backend/scripts/01a_collect_faces.py
+```
+3.  You need to train a model for this, it's better to use python 11-13 interpreter. Take note you have to have the jupyter lab package or the ipynb package installed in the environment you are using in order to run jupyter notebook cells
+   
+4.  Alternatively python will prompt you to install the package by default when you attempt to run a cell, click Install package.
+   
+5.  After you run all the cells, the trained model should be generated in the path ``bash kiosk_face_model_eff.keras``, _if there is already an existing version of it, it will upsert itself so you don't have to worry about file duplicates_
+   
+6.  You main entrypoint to the backend is through the routes ``txt /api/kiosk-status `` which the ESP32 must be able to connect to.
+9.  In order to do so take note of your machine's local address when connected to the WiFi-- the ESP32 and the device will communicated by sharing the same network through the TCP (Transmission Control Protocol). In order to ensure connectivity between the devices. Make sure to copy the ipv4 address of your machine.
+    ```txt ipconfig```
+10.  ensure that your backend is accessible through <localipconfig>/api/kiosk-status by turning off firewall and adding a rule to allow TCP for connection on port 3009. (You must change this if you are using a different port. For safety purposes always disable this rule after running locally.
+
+On windows user WIN+ R and type wf.msc, add an inbound rule to allow TCP connection on port 3009
+
+
+11.  Plug in your adapter to a USB port on your device, copy paste the code located in ``txt backend/esp32/kiosk_status_serial.ino``
+12.  Make sure you've set up your ArduinoIDE for ESP32 boards, then upload the code to the ESP32. **Make sure the connections are 3.3v when outputting to the board or else it will be fried**
+13.  It should display a boot up process.
+
+<!-- <insert video here>  -->
+14. Make sure your device and the arduino is connected to the same WiFi Network by providing the correct ssid and password. It should tell you wifi is connected and display the esp32's local ipconfig.
+16.  You must run both the frontend by npm run dev and the backend by running main.py before holding up your hand near the ultrasonic sensor.
+17.  Make sure that you have the front end open and that your face is visible.
+18.  BEHAVIOR: If there is a recognized face: will welcome you back, if the face is unrecognized, will ask you register, if there is no face, will prompt that there is no face detected, if the frontend of the backend malfunctions or is down will instead print out the status health by accessing the endpoint /api/status/ health
+19.  You can try again by putting your hand near the ultrasonic sensore 
