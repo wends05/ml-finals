@@ -45,40 +45,44 @@ That notebook now includes:
 - optimization recommendations
 - export steps for local-only artifacts
 
-## Interpretation and Notebook Outputs
+## ANALYSIS RESULTS FROM LAST SNAPSHOT
 
-Use the following committed notes as your safe, editable interpretation layer:
+This summary is intentionally privacy-safe. It describes model behavior from the latest saved analysis snapshot without naming any enrolled subject and without embedding face images.
 
-- `backend/scripts/training/model_2_analysis_report.md`
+Latest snapshot summary:
 
-The report summarizes how the model performed well without naming enrolled identities and without embedding any face images.
+- Training images: `480`
+- Validation images: `120`
+- Enrolled identities: `2`
+- Validation accuracy: `0.9917`
+- Validation loss: `0.0397`
+- Correct validation predictions: `119 / 120`
+- Misclassifications: `1`
+- Mean confidence on correct predictions: `0.9740`
+- Mean confidence on incorrect predictions: `0.7755`
+- Best validation epoch from the saved history: `5`
 
-Important privacy rule:
+What the model did well:
+
+- It generalized strongly on the held-out validation split.
+- It kept validation loss low while maintaining very high validation accuracy.
+- It separated the enrolled identities cleanly, with only one saved validation mistake.
+- It benefited from a transfer-learning backbone that provides strong visual feature extraction.
+- It showed high confidence on most correct predictions, which suggests strong class separation.
+
+Privacy guidance:
+
 - Do not commit notebook-generated artifacts from `backend/scripts/training/artifacts/`.
+- Do not publish any sample grids, prediction example images, or raw outputs that may expose a person's face or identifying filenames.
+- If charts are needed, run `backend/scripts/training/02_train_model_2.ipynb` locally and generate fresh artifacts on a trusted machine.
 
-Those files are ignored on purpose because they may contain:
-
-- private filenames
-- identity labels
-- face-bearing sample images
-- mistake examples from validation data
-
-Instead, whoever runs the notebook should generate those artifacts locally by opening `backend/scripts/training/02_train_model_2.ipynb` and running the cells on their own machine.
-
-Safe outputs to discuss in documentation or presentations:
+Safe outputs to discuss publicly:
 
 - training and validation accuracy curves
 - training and validation loss curves
 - redacted confusion matrices
 - precision, recall, and F1 summaries
 - aggregate confidence charts
-- dataset-balance summaries without identity names
-
-Local-only outputs that should stay private:
-
-- sample face grids
-- example prediction images
-- raw validation prediction exports with identifying filenames
 
 ## Model Training
 

@@ -17,7 +17,7 @@ A face recognition kiosk: train a model, serve it with FastAPI, and let an ESP32
 - [Description](#description)
 - [Tech Stack](#tech-stack)
 - [How to Run](#how-to-run)
-- [Interpretation and Notebook Outputs](#interpretation-and-notebook-outputs)
+- [Analysis Results From Last Snapshot](#analysis-results-from-last-snapshot)
 - [ESP32 Setup (Backend Integration)](#esp32-setup-backend-integration)
 - [Specifications](#specifications)
 - [Actual Demonstration: Connect ESP32 to Backend](#actual-demonstration-connect-esp32-to-backend)
@@ -114,25 +114,37 @@ bun run dev
 
 </details>
 
-<a id="interpretation-and-notebook-outputs"></a>
+<a id="analysis-results-from-last-snapshot"></a>
 
 <details open>
-<summary><strong>Interpretation and Notebook Outputs</strong></summary>
+<summary><strong>ANALYSIS RESULTS FROM LAST SNAPSHOT</strong></summary>
 
-Use the privacy-safe analysis notebook:
+This summary is intentionally privacy-safe. It describes the latest saved model snapshot without naming any enrolled subject and without showing any face images.
 
-- [backend/scripts/training/02_train_model_2.ipynb](backend/scripts/training/02_train_model_2.ipynb)
+Latest snapshot summary:
 
-Use the committed interpretation notes:
+- Training images: `480`
+- Validation images: `120`
+- Enrolled identities: `2`
+- Validation accuracy: `0.9917`
+- Validation loss: `0.0397`
+- Correct validation predictions: `119 / 120`
+- Misclassifications: `1`
+- Mean confidence on correct predictions: `0.9740`
+- Mean confidence on incorrect predictions: `0.7755`
+- Best validation epoch from the saved history: `5`
 
-- [backend/scripts/training/model_2_analysis_report.md](backend/scripts/training/model_2_analysis_report.md)
-- [backend/scripts/training/model_2_interpretation_template.md](backend/scripts/training/model_2_interpretation_template.md)
+What the model did well:
 
-Privacy guidance:
+- strong validation performance on the held-out split
+- low validation loss together with very high validation accuracy
+- clean separation between the enrolled identities, with only one saved validation mistake
+- stable transfer-learning behavior from the EfficientNetV2B0 backbone
+- high confidence on most correct predictions
 
 - Do not commit generated notebook artifacts that may contain face images, private filenames, or identity labels.
 - The generated outputs under `backend/scripts/training/artifacts/` are ignored by git on purpose.
-- If you need charts for analysis, run the notebook locally and generate your own private outputs.
+- If you need charts for analysis, run [backend/scripts/training/02_train_model_2.ipynb](backend/scripts/training/02_train_model_2.ipynb) locally and generate your own private outputs on a trusted machine.
 
 Safe outputs to discuss publicly:
 
@@ -147,13 +159,6 @@ Outputs that should remain local only:
 - sample face grids
 - example prediction images
 - raw prediction exports tied to private identities
-
-Model strengths highlighted by the notebook:
-
-- strong validation performance on a balanced private dataset
-- stable transfer-learning behavior with EfficientNetV2B0
-- falling validation loss with no obvious sign of severe overfitting
-- high confidence on most correct predictions
 
 </details>
 
