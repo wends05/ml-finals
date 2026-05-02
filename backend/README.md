@@ -1,6 +1,6 @@
-# Welcome Kiosk - Deep Learning Backend
+# Home Greeting System with Face Recognition - Deep Learning Backend
 
-This backend contains the training workflow, model files, and FastAPI service for the Welcome Kiosk project.
+This backend contains the training workflow, model files, and FastAPI service for the Home Greeting System project.
 
 ## Prerequisites and Setup
 
@@ -29,27 +29,28 @@ The training notebooks live in `backend/scripts/training/`.
 - `02_train_dense.ipynb`
 - `02_train_model_1.ipynb`
 - `02_train_model_2.ipynb`
+- `02_train_model_2_wends.ipynb`
 
-The most complete privacy-aware analysis notebook is:
+### Notebook Comparison
 
-- `backend/scripts/training/02_train_model_2.ipynb`
+`02_train_dense.ipynb` and `02_train_model_1.ipynb` were early experiments with smaller datasets and simpler architectures. They are not the focus of current development and may be archived in the future.
 
-That notebook now includes:
+`02_train_dense.ipynb` uses dense neural networks for landmark-based features, while `02_train_model_1.ipynb` uses MobileNetV2, which is a lightweight convolutional neural network architecture compared to the more powerful EfficientNetV2B0 used in the later notebooks.
 
-- installation and configuration notes
-- data loading and dataset-audit sections
-- transfer-learning architecture explanation
-- training strategy and callback guidance
-- training-curve analysis
-- validation metrics and confidence analysis
-- optimization recommendations
-- export steps for local-only artifacts
+We used `02_train_model_2.ipynb` and `02_train_model_2_wends.ipynb` for 
+
+Both `02_train_model_2.ipynb` and `02_train_model_2_wends.ipynb` use the same pipeline (EfficientNetV2B0 transfer learning, data augmentation, training strategy, and analysis sections). They differ in dataset size and model output:
+
+| Notebook                       | Classes | Train Images | Val Images | Model Output                       | `TRAIN_MODEL` |
+| ------------------------------ | ------- | ------------ | ---------- | ---------------------------------- | ------------- |
+| `02_train_model_2.ipynb`       | 2       | 480          | 120        | `kiosk_face_model_eff.keras`       | `False`       |
+| `02_train_model_2_wends.ipynb` | 11      | 2,640        | 660        | `kiosk_face_model_eff_wends.keras` | `True`        |
 
 ## ANALYSIS RESULTS FROM LAST SNAPSHOT
 
-This summary is intentionally privacy-safe. It describes model behavior from the latest saved analysis snapshot without naming any enrolled subject and without embedding face images.
+This summary is intentionally privacy-safe. It describes model behavior from the latest saved analysis snapshots without naming any enrolled subject and without embedding face images.
 
-Latest snapshot summary:
+### 2-Class Model (`02_train_model_2.ipynb`)
 
 - Training images: `480`
 - Validation images: `120`
@@ -62,13 +63,24 @@ Latest snapshot summary:
 - Mean confidence on incorrect predictions: `0.7755`
 - Best validation epoch from the saved history: `5`
 
-What the model did well:
+### 11-Class Model (`02_train_model_2_wends.ipynb`)
 
-- It generalized strongly on the held-out validation split.
-- It kept validation loss low while maintaining very high validation accuracy.
-- It separated the enrolled identities cleanly, with only one saved validation mistake.
-- It benefited from a transfer-learning backbone that provides strong visual feature extraction.
-- It showed high confidence on most correct predictions, which suggests strong class separation.
+- Training images: `2,640`
+- Validation images: `660`
+- Enrolled identities: `11`
+- Validation accuracy: `0.9909`
+- Validation loss: `0.0840`
+- Correct validation predictions: `654 / 660`
+- Misclassifications: `6`
+- Mean confidence on correct predictions: high (most near 1.0)
+- Mean confidence on incorrect predictions: low (all ≤ 0.67)
+
+What both models did well:
+
+- They generalized strongly on the held-out validation split.
+- They kept validation loss low while maintaining very high validation accuracy.
+- They benefited from a transfer-learning backbone that provides strong visual feature extraction.
+- Misclassifications occurred at low confidence, making threshold-based rejection feasible.
 
 Privacy guidance:
 
@@ -88,7 +100,14 @@ Safe outputs to discuss publicly:
 
 Run the notebook locally in Jupyter or VS Code.
 
-If you want analysis only, keep the notebook setting:
+Each notebook targets a specific model file:
+
+| Notebook                       | Model path                                        |
+| ------------------------------ | ------------------------------------------------- |
+| `02_train_model_2.ipynb`       | `backend/models/kiosk_face_model_eff.keras`       |
+| `02_train_model_2_wends.ipynb` | `backend/models/kiosk_face_model_eff_wends.keras` |
+
+If you want analysis only (skip retraining, use existing model), keep:
 
 ```python
 TRAIN_MODEL = False
@@ -99,10 +118,6 @@ If you want to retrain the model:
 ```python
 TRAIN_MODEL = True
 ```
-
-The trained model is saved to:
-
-- `backend/models/kiosk_face_model_eff.keras`
 
 ## Backend API
 

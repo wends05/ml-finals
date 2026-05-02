@@ -83,9 +83,18 @@ The data will be stored in [backend/dataset](backend/dataset), with training dat
 python backend/scripts/training/02_train_model_2.ipynb
 ```
 
-For [backend/scripts/training/02_train_dense.ipynb](backend/scripts/training/02_train_dense.ipynb), generate the landmark CSVs first by running [backend/scripts/01b_landmark_extraction.py](backend/scripts/01b_landmark_extraction.py). For [backend/scripts/training/02_train_model_1.ipynb](backend/scripts/training/02_train_model_1.ipynb) and [backend/scripts/training/02_train_model_2.ipynb](backend/scripts/training/02_train_model_2.ipynb), you can skip landmark extraction.
+There are two variants of the EfficientNetV2B0 notebook — one for smaller (2-class) datasets and one for larger (11-class) datasets:
 
-5. After training, the model is saved in [backend/models](backend/models). Start the backend server from the backend folder:
+| Notebook | Classes | Model saved to |
+|---|---|---|
+| `02_train_model_2.ipynb` | 2 | `backend/models/kiosk_face_model_eff.keras` |
+| `02_train_model_2_wends.ipynb` | 11 | `backend/models/kiosk_face_model_eff_wends.keras` |
+
+For [backend/scripts/training/02_train_dense.ipynb](backend/scripts/training/02_train_dense.ipynb), generate the landmark CSVs first by running [backend/scripts/01b_landmark_extraction.py](backend/scripts/01b_landmark_extraction.py). For [backend/scripts/training/02_train_model_1.ipynb](backend/scripts/training/02_train_model_1.ipynb), `02_train_model_2.ipynb`, and `02_train_model_2_wends.ipynb`, you can skip landmark extraction.
+
+> Note to sir: Use `02_train_model_2.ipynb` and `kiosk_face_model_eff.keras` for checking and grading. Want to keep the other notebooks for future references / projects.
+
+1. After training, the model is saved in [backend/models](backend/models). Start the backend server from the backend folder:
 
 ```bash
 cd backend
@@ -119,9 +128,9 @@ bun run dev
 <details open>
 <summary><strong>ANALYSIS RESULTS FROM LAST SNAPSHOT</strong></summary>
 
-This summary is intentionally privacy-safe. It describes the latest saved model snapshot without naming any enrolled subject and without showing any face images.
+This summary is intentionally privacy-safe. It describes the latest saved model snapshots without naming any enrolled subject and without showing any face images.
 
-Latest snapshot summary:
+### 2-Class Model (`02_train_model_2.ipynb`)
 
 - Training images: `480`
 - Validation images: `120`
@@ -134,13 +143,22 @@ Latest snapshot summary:
 - Mean confidence on incorrect predictions: `0.7755`
 - Best validation epoch from the saved history: `5`
 
-What the model did well:
+### 11-Class Model (`02_train_model_2_wends.ipynb`)
+
+- Training images: `2,640`
+- Validation images: `660`
+- Enrolled identities: `11`
+- Validation accuracy: `0.9909`
+- Validation loss: `0.0840`
+- Correct validation predictions: `654 / 660`
+- Misclassifications: `6`
+
+What both models did well:
 
 - strong validation performance on the held-out split
 - low validation loss together with very high validation accuracy
-- clean separation between the enrolled identities, with only one saved validation mistake
 - stable transfer-learning behavior from the EfficientNetV2B0 backbone
-- high confidence on most correct predictions
+- misclassifications occurred at low confidence, making threshold-based rejection feasible
 
 - Do not commit generated notebook artifacts that may contain face images, private filenames, or identity labels.
 - The generated outputs under `backend/scripts/training/artifacts/` are ignored by git on purpose.
@@ -256,7 +274,13 @@ python backend/scripts/01a_collect_faces.py
 python backend/scripts/training/02_train_model_2.ipynb
 ```
 
-The trained model will be saved as [backend/models/kiosk_face_model_eff.keras](backend/models/kiosk_face_model_eff.keras). It will be overwritten on re-train.
+Or for a larger dataset (11 classes):
+
+```bash
+python backend/scripts/training/02_train_model_2_wends.ipynb
+```
+
+The trained model will be saved as [backend/models/kiosk_face_model_eff.keras](backend/models/kiosk_face_model_eff.keras) (2-class) or [backend/models/kiosk_face_model_eff_wends.keras](backend/models/kiosk_face_model_eff_wends.keras) (11-class). Each model is overwritten on re-train.
 
 5. Your backend entrypoint is [backend/app/main.py](backend/app/main.py), and the ESP32 reads the state from `/api/kiosk-status`.
 
