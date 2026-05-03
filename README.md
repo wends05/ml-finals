@@ -92,8 +92,6 @@ There are two variants of the EfficientNetV2B0 notebook — one for smaller (2-c
 
 For [backend/scripts/training/02_train_dense.ipynb](backend/scripts/training/02_train_dense.ipynb), generate the landmark CSVs first by running [backend/scripts/01b_landmark_extraction.py](backend/scripts/01b_landmark_extraction.py). For [backend/scripts/training/02_train_model_1.ipynb](backend/scripts/training/02_train_model_1.ipynb), `02_train_model_2.ipynb`, and `02_train_model_2_wends.ipynb`, you can skip landmark extraction.
 
-> Note to sir: Use `02_train_model_2.ipynb` and `kiosk_face_model_eff.keras` for checking and grading. Want to keep the other notebooks for future references / projects.
-
 1. After training, the model is saved in [backend/models](backend/models). Start the backend server from the backend folder:
 
 ```bash
